@@ -2,23 +2,15 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasRoles;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
@@ -26,28 +18,53 @@ class User extends Authenticatable
         'company_id',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
 
+    /**
+     * الشركة اللي المستخدم تابع ليها
+     */
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    /**
+     * Scope مهم لعزل بيانات كل شركة (SaaS isolation)
+     */
+    public function scopeForCompany($query, $companyId = null)
+    {
+        return $query->where('company_id', $companyId ?? auth()->user()?->company_id);
+    }
+
+    /**
+     * Helper: هل المستخدم Owner؟
+     */
+    public function isOwner(): bool
+    {
+        return $this->hasRole('owner');
+    }
+
+    /**
+     * Helper: هل Admin؟
+     */
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('admin');
+    }
+
+    /**
+     * Helper: هل Employee؟
+     */
+    public function isEmployee(): bool
+    {
+        return $this->hasRole('employee');
     }
 }

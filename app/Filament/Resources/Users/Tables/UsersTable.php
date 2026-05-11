@@ -16,9 +16,22 @@ class UsersTable
         return $table
             ->columns([
                 TextColumn::make('id')->sortable(),
-                TextColumn::make('name')->searchable()->sortable(),
-                TextColumn::make('email')->searchable()->sortable(),
-                TextColumn::make('company_id')->searchable()->sortable()->label('Company'),
+
+                TextColumn::make('name')
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('email')
+                    ->searchable()
+                    ->sortable(),
+
+                // 🔥 الصحيح
+                TextColumn::make('roles')
+                    ->label('Role')
+                    ->formatStateUsing(
+                        fn($record) =>
+                        $record->getRoleNames()->implode(', ')
+                    ),
             ])
             ->filters([
                 //

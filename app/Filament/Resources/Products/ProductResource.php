@@ -13,6 +13,8 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Filament\Facades\Filament;
 
 class ProductResource extends Resource
 {
@@ -20,11 +22,34 @@ class ProductResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    /*
+    |---------------------------------
+    | SaaS Multi-Tenant Filter (FIXED)
+    |---------------------------------
+    */
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->when(Filament::auth()->user()?->company_id, function ($query, $companyId) {
+                $query->where('company_id', $companyId);
+            });
+    }
+
+    /*
+    |---------------------------------
+    | Form
+    |---------------------------------
+    */
     public static function form(Schema $schema): Schema
     {
         return ProductForm::configure($schema);
     }
 
+    /*
+    |---------------------------------
+    | Table
+    |---------------------------------
+    */
     public static function table(Table $table): Table
     {
         return ProductsTable::configure($table);
@@ -32,11 +57,14 @@ class ProductResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
+    /*
+    |---------------------------------
+    | Pages
+    |---------------------------------
+    */
     public static function getPages(): array
     {
         return [

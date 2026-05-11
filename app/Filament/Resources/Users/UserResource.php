@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class UserResource extends Resource
 {
@@ -24,7 +25,6 @@ class UserResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
-
     public static function form(Schema $schema): Schema
     {
         return UserForm::configure($schema);
@@ -35,13 +35,6 @@ class UserResource extends Resource
         return UsersTable::configure($table);
     }
 
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
-
     public static function getPages(): array
     {
         return [
@@ -49,5 +42,33 @@ class UserResource extends Resource
             'create' => CreateUser::route('/create'),
             'edit' => EditUser::route('/{record}/edit'),
         ];
+    }
+
+    // 🔐 Multi-Tenant Isolation (SaaS core)
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->where('company_id', auth()->user()?->company_id);
+    }
+
+    // 🔥 Policy-based permissions (NO Spatie check here)
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('viewAny', User::class);
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('create', User::class);
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->can('update', $record);
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->can('delete', $record);
     }
 }
